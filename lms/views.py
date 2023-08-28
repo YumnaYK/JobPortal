@@ -8,7 +8,7 @@ from utils.base_authentication import JWTAuthentication
 reg_emp = RegistrationController()
 emp_details = EmployeeDetailsController()
 leave_type = LeaveTypeController()
-leave_intiate = LeaveIntitateController2()
+leave_intiate = LeaveIntitateController()
 
 class EmpRegAPI(viewsets.ModelViewSet):
     

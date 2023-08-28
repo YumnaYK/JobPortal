@@ -11,6 +11,11 @@ from .models import EmployeeDetails
 from django.conf import settings
 from dateutil.parser import parse
 from .classes import *
+import ast
+from datetime import date
+from utils.helpers import create_response
+from utils.responses import SUCCESSFUL, UNSUCCESSFUL, NOT_ELIGIBLE, DAYS_ERROR
+from dateutil.parser import parse
 
 class RegistrationController:
 
@@ -162,6 +167,102 @@ class LeaveIntitateController:
 
     serializer_class = LeaveRequestSerializer
 
+    def create_leave(self, request):
+
+        start_date = parse(request.data.get("start_date")).date()
+        end_date = parse(request.data.get("end_date")).date()
+
+        print(start_date)
+        print(end_date)
+
+        id = request.data.get("user")
+        instance = User.objects.filter(id=id).first()
+
+        leave = request.data.get("leave_type")
+        print("leave", leave)  # Check the value to ensure it's in the expected format
+
+        leave_type_ids = [int(leave_id) for leave_id in leave.split(",")]
+        print("leave_type_ids", leave_type_ids)
+
+        leave_instance = LeaveType.objects.filter(id__in=leave_type_ids)
+        print(leave_instance)
+
+        request.POST._mutable = True
+        pop_instances = request.data.pop("leave_type")
+        print("pop_instances", pop_instances)
+
+        if not instance or not leave_instance:
+            return create_response({}, NOT_FOUND, 400)
+
+        for leave in leave_instance:
+            print(leave.id)
+            print(leave.name)
+            print(leave.allowed_days)
+
+            employee_details = EmployeeDetails.objects.filter(user=instance).first()
+            days_of_service = (date.today() - employee_details.joining_date).days
+            print("days_of_service", days_of_service)
+
+            leave_name_mapping = {
+                "annual": 365,
+                "casual": 90
+            }
+            minimum_service_period = leave_name_mapping.get(leave.name.lower(), 0)
+            print("minimum_service_period",minimum_service_period)
+
+            if (days_of_service >= minimum_service_period):
+                print("minimum_service_period", minimum_service_period)
+                total_days = (end_date - start_date).days + 1
+                print("total_days", total_days)
+
+                try:
+                    print("try enter")
+                    leave_type_instance = LeaveType.objects.get(id=leave.id)  # Fetch the LeaveType instance
+                    leave_balance = LeaveTracker.objects.get(user=employee_details.user, leave_type=leave_type_instance)
+
+                    print("leave_balance.Available_Days for (payload) leave initiated", leave_balance.Available_Days)
+
+                except LeaveTracker.DoesNotExist:  # Use LeaveTracker.DoesNotExist here
+                    print("except enter")
+
+                    leave_balance = LeaveTracker.objects.create(user=employee_details.user,
+                                                                leave_type=leave_type_instance,
+                                                                Available_Days=leave.allowed_days)
+                    print("LeaveTracker created for the user and leave type.")
+
+                if total_days <= leave_balance.Available_Days:
+
+                    print("leave_balance.Available_Days", leave_balance.Available_Days)
+                    leave_balance.Available_Days = leave_balance.Available_Days - total_days
+                    print("leave_balance.Available_Days after leaves approved!", leave_balance.Available_Days)
+                    leave_balance.save()
+
+                    serializer = self.serializer_class(data=request.data)
+                    request.data['leave_type'] = leave.id
+
+                    if serializer.is_valid():
+                        serializer.save()
+                        data = serializer.data
+                        msg = SUCCESSFUL
+                        status_code = 201
+
+                    else:
+                        data = serializer.errors
+                        msg = UNSUCCESSFUL
+                        status_code = 400
+                else:
+                    data = {}
+                    msg = DAYS_ERROR
+                    status_code = 400
+            else:
+                print("Else enter last ")
+                data = {}
+                msg = NOT_ELIGIBLE
+                status_code = 400
+
+        return create_response(data, msg, status_code)
+
+
     '''def send_response(self, request):
 
         id = request.data.get("user")
@@ -170,7 +271,6 @@ class LeaveIntitateController:
         user_mail = instance.email
         first_name = instance.first_name
         last_name = instance.last_name
-        
         
         try:
             if not user_mail:
@@ -209,26 +309,5 @@ class LeaveIntitateController:
             serializer.save()
             return create_response(serializer.data, SUCCESSFUL, 200)
         else:
-            return create_response(serializer.errors, UNSUCCESSFUL, status_code=404)
-        
+            return create_response(serializer.errors, UNSUCCESSFUL, status_code=404)  
     '''
-
-class LeaveIntitateController2:
-        
-        def create_leave(self, request):  
-
-            leave_id = request.data.get("leave_type")[0]
-            leave = LeaveType.objects.get(id=leave_id)
-            leave_name = leave.name
-            start_date_str = request.data.get("start_date")
-            end_date_str = request.data.get("end_date")
-            id = request.data.get("user")
-            instance = User.objects.filter(id=id).first()
-            employee_details = EmployeeDetails.objects.filter(user=instance).first()
-
-
-            application = leave_intiate2(leave_id, leave_name, start_date_str, end_date_str)
-            application.calculate(request, employee_details, leave, 0)
-
-            return create_response({}, SUCCESSFUL, status_code=201)
-    

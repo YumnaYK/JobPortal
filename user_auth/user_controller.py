@@ -207,7 +207,7 @@ class EmployeeController:
     feature_name = "Get Employees"
     serializer_class = GetEmployeeSerializer
 
-    def get_employees(self, request):
+    def  get_employees(self, request):
 
         kwargs = {}
         type = request.data.get("type")

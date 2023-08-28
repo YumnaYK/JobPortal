@@ -11,7 +11,7 @@ class User(LogsMixin, AbstractUser):
         ('employee', 'employee'),
     )
     type = models.CharField(max_length=8, choices=USER_CHOICES, null=True, blank=True)
-    emp_id = models.IntegerField(unique=True)
+    emp_id = models.IntegerField(unique=True, null=True, blank=True)
     first_name = models.CharField(max_length=25, null=True, blank=True)
     last_name = models.CharField(max_length=25, null=True, blank=True)
     email = models.EmailField(unique=True)
