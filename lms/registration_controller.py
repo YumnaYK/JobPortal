@@ -194,6 +194,8 @@ class LeaveIntitateController:
         if not instance or not leave_instance:
             return create_response({}, NOT_FOUND, 400)
 
+        responses = []
+
         for leave in leave_instance:
             print(leave.id)
             print(leave.name)
@@ -260,7 +262,13 @@ class LeaveIntitateController:
                 msg = NOT_ELIGIBLE
                 status_code = 400
 
-        return create_response(data, msg, status_code)
+            responses.append({
+                "data": data,
+                "msg": msg,
+                "status_code": status_code
+            })
+
+        return create_response(responses, "Responses for leave requests", 200)
 
 
     '''def send_response(self, request):
@@ -290,13 +298,14 @@ class LeaveIntitateController:
             send_mail(subject, message, settings.EMAIL_HOST_USER, recipient_list)
             
             # Return success message
-            return Response({'message': 'Email Successfully Sent'})
+            return Response({'message': 'Email Successfully Sent'})def send_response(self, request):
 
         except Exception as e:
             # Print the error message
             print(e)
             # Return error message
             return Response({'error': str(e)}, status=400)
+    
      
     def send_leave_notification(self, instance, report_to):
         message = f"A new leave request has been initiated by {instance.username}. Please review and take necessary action."
