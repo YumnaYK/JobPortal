@@ -48,6 +48,8 @@ class LeaveRequestAPI(viewsets.ModelViewSet):
 
     def post(self, request):
         return leave_intiate.create_leave(request)
+    def get(self, request):
+        return leave_intiate.get_leaves(request)
 
 class Delete_Leave(viewsets.ModelViewSet):
 

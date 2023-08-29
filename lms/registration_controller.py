@@ -270,6 +270,15 @@ class LeaveIntitateController:
 
         return create_response(responses, "Responses for leave requests", 200)
 
+    def get_leaves(self, request):
+
+        leave = self.serializer_class.Meta.model.objects.filter()
+
+        serialized_data = self.serializer_class(leave, many=True).data
+        response_data = {
+            "data": serialized_data
+        }
+        return create_response(response_data, SUCCESSFUL, status_code=200)
 
     '''def send_response(self, request):
 

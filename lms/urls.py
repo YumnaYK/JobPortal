@@ -19,6 +19,6 @@ urlpatterns = [
         }
     )
         ),
-    path('leave_request', LeaveRequestAPI.as_view({"post": "post"})),
+    path('leave_request', LeaveRequestAPI.as_view({"post": "post", "get": "get",})),
     path('delete', Delete_Leave.as_view({"delete": "delete_LT"})),
 ]
