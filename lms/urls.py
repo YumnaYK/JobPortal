@@ -21,4 +21,11 @@ urlpatterns = [
         ),
     path('leave_request', LeaveRequestAPI.as_view({"post": "post", "get": "get",})),
     path('delete', Delete_Leave.as_view({"delete": "delete_LT"})),
+    path('leave_approve', LeaveApproveAPI.as_view(
+            {
+                "get": "get",
+                "patch": "update"
+            }
+        )
+            ),
 ]

@@ -9,6 +9,7 @@ reg_emp = RegistrationController()
 emp_details = EmployeeDetailsController()
 leave_type = LeaveTypeController()
 leave_intiate = LeaveIntitateController()
+leave_approve = LeaveApprovalController()
 
 class EmpRegAPI(viewsets.ModelViewSet):
     
@@ -68,4 +69,9 @@ class Delete_Leave(viewsets.ModelViewSet):
         instance.delete()
         return create_response({}, SUCCESSFUL, 200)
 
-    
+class LeaveApproveAPI(viewsets.ModelViewSet):
+    authentication_classes = (JWTAuthentication,)
+    def get(self, request):
+        return leave_approve.leave_approval_view(request)
+    def update(self, request):
+        return leave_approve.approve_leave(request)

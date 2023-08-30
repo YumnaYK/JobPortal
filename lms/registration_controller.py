@@ -54,7 +54,7 @@ class EmployeeDetailsController:
     def add_employee_details(self, request):
         
         id = request.data.get("id")
-
+        print("id",id)
         try:
             if not id:
                 return create_response({}, ID_NOT_PROVIDED, 404)
@@ -329,3 +329,51 @@ class LeaveIntitateController:
         else:
             return create_response(serializer.errors, UNSUCCESSFUL, status_code=404)  
     '''
+class LeaveApprovalController:
+    def leave_approval_view(self, request):
+
+        current_user = request.user
+        current_employee = current_user.details
+
+        print("current_employee", current_employee)
+
+        if current_employee.approval_level == 'LEAD':
+            print(current_employee.approval_level)
+            pending_requests = LeaveRequest.objects.filter(status='pending', current_approval_level='from_lead')
+            print(pending_requests)
+
+        elif current_employee.approval_level == 'CDO':
+            print("current_employee.approval_level", current_employee.approval_level)
+            pending_requests = LeaveRequest.objects.filter(status='pending', current_approval_level='from_cdo')
+            print(pending_requests)
+
+        return create_response({}, SUCCESSFUL, status_code=200)
+
+    def approve_leave(self, request):
+
+        current_user = request.user
+        leave_request = LeaveRequest.objects.get(id=request.data.get("request_id"))
+        print(leave_request)
+
+        if current_user != leave_request.user:
+
+            if current_user.details.approval_level == "LEAD" and leave_request.current_approval_level == "from_lead":
+                # Team Lead approval
+                leave_request.current_approval_level = "from_cdo"
+                leave_request.save()
+
+                # Notify the CDO
+                #message = f"Leave request from {leave_request.start_date} to {leave_request.end_date} requires your approval."
+                #Notification.objects.create(recipient=leave_request.manager, message=message)
+                return create_response({}, SUCCESSFUL, status_code=200)
+
+            elif current_user.details.approval_level == "CDO" and leave_request.current_approval_level == "from_cdo":
+                # COD approval
+                leave_request.current_approval_level = "approved"
+                leave_request.status = "approved"
+                leave_request.save()
+                return create_response({}, SUCCESSFUL, status_code=200)
+        else:
+            return create_response({}, SAME_USER, status_code=400)
+
+        return create_response({}, SUCCESSFUL, status_code=200)
